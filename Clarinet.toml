@@ -1,0 +1,15 @@
+[project]
+name = "executable-proposals"
+requirements = []
+
+[contracts.proposal-trait]
+path = "contracts/proposal-trait.clar"
+depends_on = []
+
+[contracts.proposals]
+path = "contracts/proposals.clar"
+depends_on = ["proposal-trait"]
+
+[contracts.prop1]
+path = "contracts/prop1.clar"
+depends_on = ["proposals", "proposal-trait"]
