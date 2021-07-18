@@ -6,9 +6,9 @@
   (begin
     (asserts! (is-eq contract-caller .proposals) (err ERR_UNAUTHORIZED))
 
-    (print (contract-call? .proposals get-uint-argument proposalId "arg1"))
-    (print (contract-call? .proposals get-int-argument proposalId "arg2"))
-    (print (contract-call? .proposals get-principal-argument proposalId "arg3"))
+    (print (contract-call? .proposals get-uint-value-by-name proposalId "arg1"))
+    (print (contract-call? .proposals get-uint-value-by-name proposalId "arg2"))
+    (print (contract-call? .proposals get-uint-value-by-name proposalId "arg3"))
     (ok true)
   )
 )

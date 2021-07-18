@@ -25,73 +25,175 @@
   }
 )
 
-(define-map UIntArguments
+(define-map UIntArgumentsByName
   { proposalId: uint, name: (string-ascii 255) }
+  { argumentId: uint, value: uint }
+)
+
+(define-map UIntArgumentsById
+  { proposalId: uint, argumentId: uint }
+  { name: (string-ascii 255), value: uint}
+)
+
+(define-map IntArgumentsByName
+  { proposalId: uint, name: (string-ascii 255) }
+  { argumentId: uint, value: int }
+)
+
+(define-map IntArgumentsById
+  { proposalId: uint, argumentId: uint }
+  { name: (string-ascii 255), value: int}
+)
+
+(define-map PrincipalArgumentsByName
+  { proposalId: uint, name: (string-ascii 255) }
+  { argumentId: uint, value: principal }
+)
+
+(define-map PrincipalArgumentsById
+  { proposalId: uint, argumentId: uint }
+  { name: (string-ascii 255), value: principal}
+)
+
+(define-map ProposalLastArgIds
+  { proposalId: uint, datatype: (string-ascii 25)}
   uint
 )
 
-(define-map IntArguments
-  { proposalId: uint, name: (string-ascii 255) }
-  int
+(define-read-only (get-proposal-last-arg-id (proposalId uint) (datatype (string-ascii 25)))
+  (default-to u0 (map-get? ProposalLastArgIds { proposalId: proposalId, datatype: datatype }))
 )
 
-(define-map PrincipalArguments
-  { proposalId: uint, name: (string-ascii 255) }
-  principal
+(define-private (set-proposal-last-arg-id (proposalId uint) (datatype (string-ascii 25)) (lastId uint))
+  (map-set ProposalLastArgIds { proposalId: proposalId, datatype: datatype } lastId)
 )
+
 
 
 (define-public (add-uint-argument (proposalId uint) (name (string-ascii 255)) (value uint))
   (let
     (
       (proposal (unwrap! (map-get? Proposals proposalId) (err ERR_UNKNOWN_PROPOSAL)))
+      (argumentId (+ (get-proposal-last-arg-id proposalId "uint") u1))
     )
     (asserts! (is-eq contract-caller (get creator proposal)) (err ERR_UNAUTHORIZED))
-    (asserts! (map-insert UIntArguments { proposalId: proposalId, name: name } value) 
-      (err ERR_ARGUMENT_ALREADY_EXISTS))
-      
+    (asserts! 
+      (map-insert UIntArgumentsByName
+        { proposalId: proposalId, name: name } 
+        { argumentId: argumentId, value: value }
+      ) 
+      (err ERR_ARGUMENT_ALREADY_EXISTS)
+    )
+    (map-insert UIntArgumentsById
+      { proposalId: proposalId, argumentId: argumentId }
+      { name: name, value: value}
+    )
+    (set-proposal-last-arg-id proposalId "uint" argumentId)  
     (ok true)
   )
 )
-
-(define-read-only (get-uint-argument (proposalId uint) (name (string-ascii 255)))
-  (map-get? UIntArguments { proposalId: proposalId, name: name })
-)
-
 
 (define-public (add-int-argument (proposalId uint) (name (string-ascii 255)) (value int))
   (let
     (
       (proposal (unwrap! (map-get? Proposals proposalId) (err ERR_UNKNOWN_PROPOSAL)))
+      (argumentId (+ (get-proposal-last-arg-id proposalId "int") u1))
     )
     (asserts! (is-eq contract-caller (get creator proposal)) (err ERR_UNAUTHORIZED))
-    (asserts! (map-insert IntArguments { proposalId: proposalId, name: name } value) 
-      (err ERR_ARGUMENT_ALREADY_EXISTS))
+    (asserts! 
+      (map-insert IntArgumentsByName 
+        { proposalId: proposalId, name: name }
+        { argumentId: argumentId, value: value }
+      ) 
+      (err ERR_ARGUMENT_ALREADY_EXISTS)
+    )
+    (map-insert IntArgumentsById
+      { proposalId: proposalId, argumentId: argumentId }
+      { name: name, value: value}
+    )
+
+    (set-proposal-last-arg-id proposalId "int" argumentId)
       
     (ok true)
   )
 )
 
-(define-read-only (get-int-argument (proposalId uint) (name (string-ascii 255)))
-  (map-get? UIntArguments { proposalId: proposalId, name: name })
-)
 
 (define-public (add-principal-argument (proposalId uint) (name (string-ascii 255)) (value principal))
   (let
     (
       (proposal (unwrap! (map-get? Proposals proposalId) (err ERR_UNKNOWN_PROPOSAL)))
+      (argumentId (+ (get-proposal-last-arg-id proposalId "principal") u1))
     )
     (asserts! (is-eq contract-caller (get creator proposal)) (err ERR_UNAUTHORIZED))
-    (asserts! (map-insert PrincipalArguments { proposalId: proposalId, name: name } value) 
-      (err ERR_ARGUMENT_ALREADY_EXISTS))
-      
+    (asserts! 
+      (map-insert PrincipalArgumentsByName
+        { proposalId: proposalId, name: name } 
+        { argumentId: argumentId, value: value }
+      ) 
+      (err ERR_ARGUMENT_ALREADY_EXISTS)
+    )
+
+    (map-insert PrincipalArgumentsById
+      { proposalId: proposalId, argumentId: argumentId }
+      { name: name, value: value}
+    )
+    (set-proposal-last-arg-id proposalId "principal" argumentId)  
     (ok true)
   )
 )
 
-(define-read-only (get-principal-argument (proposalId uint) (name (string-ascii 255)))
-  (map-get? PrincipalArguments { proposalId: proposalId, name: name })
+;; UINT getters
+(define-read-only (get-uint-argument-by-name (proposalId uint) (name (string-ascii 255)))
+  (map-get? UIntArgumentsByName { proposalId: proposalId, name: name })
 )
+
+(define-read-only (get-uint-value-by-name (proposalId uint) (name (string-ascii 255)))
+  (get value (get-uint-argument-by-name proposalId name))
+)
+
+(define-read-only (get-uint-argument-by-id (proposalId uint) (argumentId uint))
+  (map-get? UIntArgumentsById { proposalId: proposalId, argumentId: argumentId })
+)
+
+(define-read-only (get-uint-value-by-id (proposalId uint) (argumentId uint))
+  (get value (get-uint-argument-by-id proposalId argumentId))
+)
+
+;; INT getters
+(define-read-only (get-int-argument-by-name (proposalId uint) (name (string-ascii 255)))
+  (map-get? IntArgumentsByName { proposalId: proposalId, name: name })
+)
+
+(define-read-only (get-int-value-by-name (proposalId uint) (name (string-ascii 255)))
+  (get value (get-int-argument-by-name proposalId name))
+)
+
+(define-read-only (get-int-argument-by-id (proposalId uint) (argumentId uint))
+  (map-get? IntArgumentsById { proposalId: proposalId, argumentId: argumentId })
+)
+
+(define-read-only (get-int-value-by-id (proposalId uint) (argumentId uint))
+  (get value (get-int-argument-by-id proposalId argumentId))
+)
+
+;; PRINCIPAL getters
+(define-read-only (get-principal-argument-by-name (proposalId uint) (name (string-ascii 255)))
+  (map-get? PrincipalArgumentsByName { proposalId: proposalId, name: name })
+)
+
+(define-read-only (get-principal-value-by-name (proposalId uint) (name (string-ascii 255)))
+  (get value (get-principal-argument-by-name proposalId name))
+)
+
+(define-read-only (get-principal-argument-by-id (proposalId uint) (argumentId uint))
+  (map-get? PrincipalArgumentsById { proposalId: proposalId, argumentId: argumentId })
+)
+
+(define-read-only (get-principal-value-by-id (proposalId uint) (argumentId uint))
+  (get value (get-principal-argument-by-id proposalId argumentId))
+)
+
 
 (define-public (add-proposal (contract <proposal-trait>))
   (let

@@ -1,4 +1,4 @@
-
 {
-    "deno.enable": true,
+  "editor.rulers": [100, 140],
+  "deno.enable": true
 }
