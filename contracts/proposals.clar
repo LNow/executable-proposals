@@ -78,15 +78,34 @@
   (map-set ArgumentLastIds { proposalId: proposalId, argumentType: argumentType } lastId)
 )
 
+(define-private (generate-argument-id (proposalId uint) (argumentType (string-ascii 25)))
+  (let
+    (
+      (argumentId (+ (get-argument-last-id proposalId argumentType) u1))
+    )
+    (set-argument-last-id proposalId argumentType argumentId)
+    argumentId
+  )
+)
+
+(define-private (guard-add-argument (proposalId uint))
+  (let
+    (
+      (proposal (unwrap! (map-get? Proposals proposalId) (err ERR_UNKNOWN_PROPOSAL)))
+    )
+    (asserts! (is-eq contract-caller (get creator proposal)) (err ERR_UNAUTHORIZED))
+    (asserts! (not (get isActive proposal)) (err ERR_PROPOSAL_ALREADY_ACTIVE))
+    (ok true)
+  )
+)
 
 
 (define-public (add-uint-argument (proposalId uint) (name (string-ascii 255)) (value uint))
   (let
     (
-      (proposal (unwrap! (map-get? Proposals proposalId) (err ERR_UNKNOWN_PROPOSAL)))
-      (argumentId (+ (get-argument-last-id proposalId "uint") u1))
+      (argumentId (generate-argument-id proposalId "uint"))
     )
-    (asserts! (is-eq contract-caller (get creator proposal)) (err ERR_UNAUTHORIZED))
+    (try! (guard-add-argument proposalId))
     (asserts! 
       (map-insert UIntArgumentsByName
         { proposalId: proposalId, name: name } 
@@ -98,7 +117,6 @@
       { proposalId: proposalId, argumentId: argumentId }
       { name: name, value: value}
     )
-    (set-argument-last-id proposalId "uint" argumentId)  
     (ok true)
   )
 )
@@ -106,10 +124,9 @@
 (define-public (add-int-argument (proposalId uint) (name (string-ascii 255)) (value int))
   (let
     (
-      (proposal (unwrap! (map-get? Proposals proposalId) (err ERR_UNKNOWN_PROPOSAL)))
-      (argumentId (+ (get-argument-last-id proposalId "int") u1))
+      (argumentId (generate-argument-id proposalId "int"))
     )
-    (asserts! (is-eq contract-caller (get creator proposal)) (err ERR_UNAUTHORIZED))
+    (try! (guard-add-argument proposalId))
     (asserts! 
       (map-insert IntArgumentsByName 
         { proposalId: proposalId, name: name }
@@ -121,7 +138,6 @@
       { proposalId: proposalId, argumentId: argumentId }
       { name: name, value: value}
     )
-    (set-argument-last-id proposalId "int" argumentId) 
     (ok true)
   )
 )
@@ -129,10 +145,9 @@
 (define-public (add-principal-argument (proposalId uint) (name (string-ascii 255)) (value principal))
   (let
     (
-      (proposal (unwrap! (map-get? Proposals proposalId) (err ERR_UNKNOWN_PROPOSAL)))
-      (argumentId (+ (get-argument-last-id proposalId "principal") u1))
+      (argumentId (generate-argument-id proposalId "principal"))
     )
-    (asserts! (is-eq contract-caller (get creator proposal)) (err ERR_UNAUTHORIZED))
+    (try! (guard-add-argument proposalId))
     (asserts! 
       (map-insert PrincipalArgumentsByName
         { proposalId: proposalId, name: name } 
@@ -144,7 +159,6 @@
       { proposalId: proposalId, argumentId: argumentId }
       { name: name, value: value}
     )
-    (set-argument-last-id proposalId "principal" argumentId)  
     (ok true)
   )
 )
@@ -152,10 +166,9 @@
 (define-public (add-string-argument (proposalId uint) (name (string-ascii 255)) (value (string-ascii 255)))
   (let
     (
-      (proposal (unwrap! (map-get? Proposals proposalId) (err ERR_UNKNOWN_PROPOSAL)))
-      (argumentId (+ (get-argument-last-id proposalId "string") u1))
+      (argumentId (generate-argument-id proposalId "string"))
     )
-    (asserts! (is-eq contract-caller (get creator proposal)) (err ERR_UNAUTHORIZED))
+    (try! (guard-add-argument proposalId))
     (asserts!
       (map-insert StringArgumentsByName
         { proposalId: proposalId, name: name }
@@ -167,7 +180,6 @@
       { proposalId: proposalId, argumentId: argumentId }
       { name: name, value: value }
     )
-    (set-argument-last-id proposalId "string" argumentId)
     (ok true)
   )
 )
